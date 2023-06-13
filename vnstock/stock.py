@@ -49,16 +49,12 @@ def http_request(domain, api_endpoint, data={}, headers=headers):
 
 def listing_companies():
     """
-    This function returns the list of all available stock symbols from a csv file or a live api request.
-    Parameters: 
-        mode (str): The mode of getting the data. If empty, read from the csv file. If 'live', request from the api url. 
-        path (str): The path of the csv file to read from. Default is the path of the file 'vn_stock_listing_companies_2023-02-23.csv'. You can find the latest updated file at `https://github.com/thinh-vu/vnstock/tree/main/src`
-    Returns: df (DataFrame): A pandas dataframe containing the stock symbols and other information. 
+    Returns the list of all available stock symbols.
     """
     domain = 'fiin-core.ssi.com.vn'
     api_endpoint = '/Master/GetListOrganization?language=vi'
-    res = http_request(domain, api_endpoint, headers)
-    r = json.loads(res.read().decode("utf-8"))
+    res = http_request(domain, api_endpoint)
+    r = json.loads(res.read().decode('utf-8'))
     df = pd.DataFrame(r['items']).drop(columns=['organCode', 'icbCode', 'organTypeCode', 'comTypeCode']).rename(
         columns={'comGroupCode': 'group_code', 'organName': 'company_name', 'organShortName': 'company_short_name'})
     return df
@@ -228,17 +224,17 @@ def financial_ratio_compare(symbol_ls, industry_comparison, frequency, start_yea
         timeline = str(start_year) + '_4'
 
     domain = "fiin-fundamental.ssi.com.vn"
-    
+
     for i in range(len(symbol_ls)):
         if i == 0:
             company_join = '&CompareToCompanies={}'.format(symbol_ls[i])
             api_endpoint = '/FinancialAnalysis/DownloadFinancialRatio2?language=vi&OrganCode={}&CompareToIndustry={}{}&Frequency={}&Ratios=ryd21&Ratios=ryd25&Ratios=ryd14&Ratios=ryd7&Ratios=rev&Ratios=isa22&Ratios=ryq44&Ratios=ryq14&Ratios=ryq12&Ratios=rtq51&Ratios=rtq50&Ratios=ryq48&Ratios=ryq47&Ratios=ryq45&Ratios=ryq46&Ratios=ryq54&Ratios=ryq55&Ratios=ryq56&Ratios=ryq57&Ratios=nob151&Ratios=casa&Ratios=ryq58&Ratios=ryq59&Ratios=ryq60&Ratios=ryq61&Ratios=ryd11&Ratios=ryd3&TimeLineFrom={}'.format(symbol_ls[
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 i], industry_comparison, '', frequency, timeline)
+                i], industry_comparison, '', frequency, timeline)
         elif i > 0:
             company_join = '&'.join(
                 [company_join, 'CompareToCompanies={}'.format(symbol_ls[i])])
             api_endpoint = '/FinancialAnalysis/DownloadFinancialRatio2?language=vi&OrganCode={}&CompareToIndustry={}{}&Frequency={}&Ratios=ryd21&Ratios=ryd25&Ratios=ryd14&Ratios=ryd7&Ratios=rev&Ratios=isa22&Ratios=ryq44&Ratios=ryq14&Ratios=ryq12&Ratios=rtq51&Ratios=rtq50&Ratios=ryq48&Ratios=ryq47&Ratios=ryq45&Ratios=ryq46&Ratios=ryq54&Ratios=ryq55&Ratios=ryq56&Ratios=ryq57&Ratios=nob151&Ratios=casa&Ratios=ryq58&Ratios=ryq59&Ratios=ryq60&Ratios=ryq61&Ratios=ryd11&Ratios=ryd3&TimeLineFrom=2017_5'.format(symbol_ls[
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     i], industry_comparison, company_join, frequency, timeline)
+                i], industry_comparison, company_join, frequency, timeline)
     r = http_request(domain, api_endpoint, headers=headers)
     df = pd.read_excel(BytesIO(r.read()), skiprows=7)
     return df
@@ -475,7 +471,8 @@ def get_index_series(index_code='VNINDEX', time_range='OneYear', headers=headers
     domain = 'fiin-market.ssi.com.vn'
     api_endpoint = f'/MarketInDepth/GetIndexSeries?language=vi&ComGroupCode={index_code}&TimeRange={time_range}&id=1'
     payload = {}
-    response = http_request(domain, api_endpoint, data=payload, headers=headers)
+    response = http_request(domain, api_endpoint,
+                            data=payload, headers=headers)
     result = json_normalize(json.loads(response.read())['items'])
     return result
 
@@ -486,7 +483,6 @@ def get_latest_indices(headers=headers):
     """
     domain = 'fiin-market.ssi.com.vn'
     api_endpoint = '/MarketInDepth/GetLatestIndices?language=vi&pageSize=999999&status=1'
-    payload = {}
-    response = http_request(domain, api_endpoint, data=payload, headers=headers)
+    response = http_request(domain, api_endpoint, headers=headers)
     result = json_normalize(json.loads(response.read())['items'])
     return result
